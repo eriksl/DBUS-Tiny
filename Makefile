@@ -39,7 +39,6 @@ CPPFLAGS		:= -O3 -fPIC $(DBUS_CFLAGS) $(DBUS_LIBS) -lboost_program_options -I.
 
 OBJS			:= dbus-tiny.o dbus-tiny-server.o dbus-tiny-client.o 
 HDRS			:= dbus-tiny.h
-BIN				:= dbus-tiny-client
 SWIG_DIR		:= DBUS
 SWIG_SRC		:= DBUS\:\:Tiny.i
 SWIG_PM			:= Tiny.pm
@@ -52,15 +51,15 @@ SWIG_SO_2		:= $(SWIG_DIR)/Tiny.so
 .PRECIOUS:		*.cpp *.i
 .PHONY:			all swig
 
-all:			$(BIN) swig
+all:			client swig
 
 swig:			$(SWIG_PM_2) $(SWIG_SO_2)
 
 clean:
 				$(VECHO) "CLEAN"
-				-$(Q) rm -rf $(OBJS) main.o $(BIN) $(SWIG_WRAP_SRC) $(SWIG_PM) $(SWIG_PM_2) $(SWIG_WRAP_OBJ) $(SWIG_SO) $(SWIG_SO_2) $(SWIG_DIR) 2> /dev/null
+				-$(Q) rm -rf $(OBJS) client.o client $(SWIG_WRAP_SRC) $(SWIG_PM) $(SWIG_PM_2) $(SWIG_WRAP_OBJ) $(SWIG_SO) $(SWIG_SO_2) $(SWIG_DIR) 2> /dev/null
 
-main.o:			$(HDRS)
+client.o:		$(HDRS)
 $(SWIG_PM):		$(HDRS)
 $(SWIG_SRC):	$(HDRS)
 
@@ -68,9 +67,9 @@ $(SWIG_SRC):	$(HDRS)
 				$(VECHO) "CPP $< -> $@"
 				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) -c $< -o $@
 
-$(BIN):			$(OBJS) main.o
-				$(VECHO) "LD $(OBJS) main.o -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) main.o -o $@
+client:			$(OBJS) client.o
+				$(VECHO) "LD $(OBJS) client.o -> $@"
+				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) client.o -o $@
 
 $(SWIG_WRAP_SRC) $(SWIG_PM): $(SWIG_SRC)
 				$(VECHO) "SWIG $< -> $@"
