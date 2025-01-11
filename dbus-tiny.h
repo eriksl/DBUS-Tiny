@@ -78,7 +78,7 @@ class DbusTinyClient
 		void send_uint32_uint32_string_string(const std::string &service, const std::string &interface, const std::string &method,
 				uint32_t, uint32_t, const std::string &, const std::string &);
 		const std::string &receive_string();
-		void receive_uint64_uint32_uint32_string_double(uint64_t &, uint32_t &, uint32_t &, std::string, double &);
+		void receive_uint64_uint32_uint32_string_double(uint64_t &, uint32_t &, uint32_t &, std::string &, double &);
 		void receive_uint64_uint32_uint32_string_double_swig();
 		void signal_string(const std::string &service, const std::string &interface, const std::string &signal, const std::string &parameter);
 

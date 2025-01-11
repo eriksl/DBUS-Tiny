@@ -18,7 +18,7 @@ CCWARNINGS		:=	-Wall -Wextra -Werror \
 						-Wduplicated-cond -Wlto-type-mismatch -Wdangling-else \
 						-Wdangling-pointer=2 -Wpacked -Wfloat-equal -Winit-self -Wmissing-include-dirs \
 						-Wmissing-noreturn -Wbool-compare -Wsuggest-attribute=noreturn -Wsuggest-attribute=format \
-						-Wmissing-format-attribute -Wuninitialized -Wtrampolines -Wframe-larger-than=2048 \
+						-Wmissing-format-attribute -Wuninitialized -Wtrampolines -Wframe-larger-than=16384 \
 						-Wunsafe-loop-optimizations -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings \
 						-Wsequence-point -Wlogical-op -Wlogical-not-parentheses -Wredundant-decls -Wvla \
 						-Wdisabled-optimization -Wunreachable-code -Wparentheses -Wmissing-declarations \

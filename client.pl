@@ -35,7 +35,7 @@ try
 {
 	my($dbus_client) = new DBUS::Tiny::DbusTinyClient;
 
-	if(!defined($service))
+	if(!defined($service) && !defined($signal_string))
 	{
 		print STDERR ("usage: dbus-tiny-client.pl <options> <arguments>\n");
 		print STDERR ("       -s|--service <service>\n");
@@ -45,8 +45,10 @@ try
 		print STDERR ("       -1|--string-call-string <method>\n");
 		print STDERR ("       -2|--call-x-1 <method>\n");
 		print STDERR ("       -3|--signal-string <method>\n");
+		print STDERR ("       -a|--argument <argument> (may be repeated)\n");
 	}
 
+	$service = "/org/freedesktop/DBus/dummy" if(!defined($service));
 	$interface = "" if(!defined($interface));
 
 	while(defined($argument = shift(@ARGV)))

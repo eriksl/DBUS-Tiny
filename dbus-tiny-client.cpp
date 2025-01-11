@@ -241,7 +241,7 @@ const std::string& DbusTinyClient::receive_string()
 	}
 }
 
-void DbusTinyClient::receive_uint64_uint32_uint32_string_double(uint64_t &p1u64, uint32_t &p2u32, uint32_t &p3u32, std::string p4s, double &p5d)
+void DbusTinyClient::receive_uint64_uint32_uint32_string_double(uint64_t &p1u64, uint32_t &p2u32, uint32_t &p3u32, std::string &p4s, double &p5d)
 {
 	DBusMessage *reply_message = nullptr;
 

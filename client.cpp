@@ -43,7 +43,7 @@ int main(int argc, const char **argv)
 			DbusTinyClient dbus_client;
 
 			if(service.length() == 0)
-				throw("parameter service required");
+				service = "/org/freedesktop/DBus/dummy";
 
 			if(introspect)
 			{
