@@ -7,6 +7,8 @@
 %include typemaps.i
 
 %rename receive_uint64_uint32_uint32_string_double_swig receive_uint64_uint32_uint32_string_double;
+%rename get_message_swig get_message;
+%rename receive_uint32_uint32_string_string_swig receive_uint32_uint32_string_string;
 
 %{
 #include <iostream>

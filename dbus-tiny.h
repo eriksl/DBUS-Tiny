@@ -44,25 +44,47 @@ class DbusTinyServer
 {
 	public:
 
+		DbusTinyServer() = delete;
 		DbusTinyServer(const DbusTinyServer &) = delete;
 
-		DbusTinyServer();
 		DbusTinyServer(const std::string &bus);
+		~DbusTinyServer();
 
-		void add_signal_filter(const std::string &interface);
-		bool get_message(int *type = nullptr, std::string *interface = nullptr, std::string *method = nullptr);
-		void receive_string(std::string &string);
+		void register_signal(const std::string &interface);
+		void get_message(std::string &type, std::string &interface, std::string &method);
+		void get_message_swig();
+		const std::string &receive_string();
 		void receive_uint32_uint32_string_string(uint32_t &, uint32_t &, std::string &, std::string &);
+		void receive_uint32_uint32_string_string_swig();
 		void send_string(const std::string &reply_string);
 		void send_uint64_uint32_uint32_string_double(uint64_t, uint32_t, uint32_t, const std::string &, double);
-		std::string inform_error(const std::string &reason);
+		const std::string &inform_error(const std::string &reason);
 		void reset();
+
+		const std::string &get_message_type();
+		const std::string &get_message_interface();
+		const std::string &get_message_method();
+
+		uint32_t get_rv_uint32_0();
+		uint32_t get_rv_uint32_1();
+		const std::string &get_rv_string_0();
+		const std::string &get_rv_string_1();
 
 	private:
 
 		DBusError dbus_error;
 		DBusConnection *bus_connection;
 		DBusMessage *pending_message;
+
+		std::string message_type;
+		std::string message_interface;
+		std::string message_method;
+		std::string message_string_reply_0;
+
+		uint32_t rv_uint32_0;
+		uint32_t rv_uint32_1;
+		std::string rv_string_0;
+		std::string rv_string_1;
 };
 
 class DbusTinyClient

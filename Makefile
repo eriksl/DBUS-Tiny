@@ -51,7 +51,7 @@ SWIG_SO_2		:= $(SWIG_DIR)/Tiny.so
 .PRECIOUS:		*.cpp *.i
 .PHONY:			all swig
 
-all:			client swig
+all:			client server swig
 
 swig:			$(SWIG_PM_2) $(SWIG_SO_2)
 
@@ -70,6 +70,10 @@ $(SWIG_SRC):	$(HDRS)
 client:			$(OBJS) client.o
 				$(VECHO) "LD $(OBJS) client.o -> $@"
 				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) client.o -o $@
+
+server:			$(OBJS) server.o
+				$(VECHO) "LD $(OBJS) server.o -> $@"
+				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) server.o -o $@
 
 $(SWIG_WRAP_SRC) $(SWIG_PM): $(SWIG_SRC)
 				$(VECHO) "SWIG $< -> $@"
