@@ -90,6 +90,9 @@ class DbusTinyClient
 
 	private:
 
+		bool path_valid(const std::string &path);
+		bool domain_valid(const std::string &domain);
+
 		DBusError dbus_error;
 		DBusConnection *bus_connection;
 		DBusPendingCall *pending_call;

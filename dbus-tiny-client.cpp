@@ -37,6 +37,12 @@ void DbusTinyClient::send_void(const std::string &service, const std::string &in
 		request_message = nullptr;
 		pending_call = nullptr;
 
+		if(!domain_valid(service))
+			throw(DbusTinyInternalException("invalid service"));
+
+		if((interface != "") && !domain_valid(interface))
+			throw(DbusTinyInternalException("invalid interface"));
+
 		if(!(request_message = dbus_message_new_method_call(service.c_str(), "/", (interface == "") ? nullptr : interface.c_str(), method.c_str())))
 			throw(DbusTinyInternalException("error in dbus_message_new_method_call"));
 
@@ -82,6 +88,12 @@ void DbusTinyClient::send_string(const std::string &service, const std::string &
 
 		request_message = nullptr;
 		pending_call = nullptr;
+
+		if(!domain_valid(service))
+			throw(DbusTinyInternalException("invalid service"));
+
+		if((interface != "") && !domain_valid(interface))
+			throw(DbusTinyInternalException("invalid interface"));
 
 		if(!(request_message = dbus_message_new_method_call(service.c_str(), "/", (interface == "") ? nullptr : interface.c_str(), method.c_str())))
 			throw(DbusTinyInternalException("error in dbus_message_new_method_call"));
@@ -134,6 +146,15 @@ void DbusTinyClient::send_uint32_uint32_string_string(const std::string &service
 
 		request_message = nullptr;
 		pending_call = nullptr;
+
+		if(!domain_valid(service))
+			throw(DbusTinyInternalException("invalid service"));
+
+		if((interface != "") && !domain_valid(interface))
+			throw(DbusTinyInternalException("invalid interface"));
+
+		if(method.find('-') != std::string::npos)
+			throw(DbusTinyInternalException("invalid method name in dbus_message_new_method_call"));
 
 		if(!(request_message = dbus_message_new_method_call(service.c_str(), "/", (interface == "") ? nullptr : interface.c_str(), method.c_str())))
 			throw(DbusTinyInternalException("error in dbus_message_new_method_call"));
@@ -319,6 +340,12 @@ void DbusTinyClient::signal_string(const std::string &service, const std::string
 
 		signal_message = nullptr;
 
+		if(!path_valid(service))
+			throw(DbusTinyInternalException("invalid service"));
+
+		if(!domain_valid(interface))
+			throw(DbusTinyInternalException("invalid interface"));
+
 		if(!(signal_message = dbus_message_new_signal(service.c_str(), interface.c_str(), signal.c_str())))
 			throw(DbusTinyInternalException("error in dbus_message_new_signal"));
 
@@ -376,4 +403,35 @@ uint32_t DbusTinyClient::get_rv_uint32_1()
 double DbusTinyClient::get_rv_double_0()
 {
 	return(rv_double_0);
+}
+
+bool DbusTinyClient::path_valid(const std::string &path)
+{
+	if(path.length() == 0)
+		return(false);
+
+	if(path.at(0) != '/')
+		return(false);
+
+	if(path.find('.') != std::string::npos)
+		return(false);
+
+	return(true);
+}
+
+bool DbusTinyClient::domain_valid(const std::string &domain)
+{
+	if((domain.length() > 0) && (domain.at(0) == '.'))
+		return(false);
+
+	if(domain.back() == '.')
+		return(false);
+
+	if(domain.find('/') != std::string::npos)
+		return(false);
+
+	if(domain.find('.') == std::string::npos)
+		return(false);
+
+	return(true);
 }
