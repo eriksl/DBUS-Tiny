@@ -11,25 +11,6 @@ else
 	MAKEMINS := -s
 endif
 
-CCWARNINGS		:=	-Wall -Wextra -Werror \
-						-Wformat-overflow=2 -Wshift-overflow=2 -Wimplicit-fallthrough=5 -Wformat-signedness \
-						-Wformat-truncation=2 -Wstringop-overflow=4 -Wunused-const-variable=2 -Walloca \
-						-Warray-bounds=2 -Wswitch-bool -Wsizeof-array-argument -Wduplicated-branches \
-						-Wduplicated-cond -Wlto-type-mismatch -Wdangling-else \
-						-Wdangling-pointer=2 -Wpacked -Wfloat-equal -Winit-self -Wmissing-include-dirs \
-						-Wmissing-noreturn -Wbool-compare -Wsuggest-attribute=noreturn -Wsuggest-attribute=format \
-						-Wmissing-format-attribute -Wuninitialized -Wtrampolines -Wframe-larger-than=16384 \
-						-Wunsafe-loop-optimizations -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings \
-						-Wsequence-point -Wlogical-op -Wlogical-not-parentheses -Wredundant-decls -Wvla \
-						-Wdisabled-optimization -Wunreachable-code -Wparentheses -Wmissing-declarations \
-						-Wcast-align -Winline -Wmultistatement-macros -Warray-bounds=2 \
-						\
-						-Wno-error=cast-qual \
-						-Wno-error=unsafe-loop-optimizations \
-						\
-						-Wno-packed \
-						-Wno-unused-parameter \
-
 CPP				:=	g++
 
 DBUS_CFLAGS		!=	pkg-config --cflags dbus-1
@@ -74,19 +55,19 @@ $(SWIG_SRC):	$(HDRS)
 
 %.o:			%.cpp
 				$(VECHO) "CPP $< -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) -c $< -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) -c $< -o $@
 
 $(LIB):			$(LIBOBJS)
 				$(VECHO) "LD $(LIBOBJS) -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(LIBOBJS) -shared -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(LIBOBJS) -shared -o $@
 
 $(CLIENT):		$(CLIENT).o $(LIB)
 				$(VECHO) "LD $(CLIENT).o -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(CLIENT).o -L. -ldbus-tiny -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(CLIENT).o -L. -ldbus-tiny -Wl,-rpath=$(PWD) -o $@
 
 $(SERVER):		$(SERVER).o $(LIB)
 				$(VECHO) "LD $(SERVER).o -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(SERVER).o -L. -ldbus-tiny -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(SERVER).o -L. -ldbus-tiny -Wl,-rpath=$(PWD) -o $@
 
 $(SWIG_WRAP_SRC) $(SWIG_PM): $(SWIG_SRC)
 				$(VECHO) "SWIG $< -> $@"
