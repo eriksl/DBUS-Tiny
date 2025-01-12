@@ -4,4 +4,6 @@
 DBUS::Tiny.so
 DBUS::Tiny_wrap.cpp
 Tiny.pm
-client
+dbus-tiny-client
+dbus-tiny-server
+libdbus-tiny.so

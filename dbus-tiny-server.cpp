@@ -1,235 +1,180 @@
 #include <dbus-tiny.h>
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <dbus/dbus.h>
-
 #include <string>
 #include <iostream>
 #include <boost/format.hpp>
+#include <boost/program_options.hpp>
 
-DbusTinyServer::DbusTinyServer(const std::string &bus)
+int main(int argc, const char **argv)
 {
-	int rv;
-
-	dbus_error_init(&dbus_error);
-
-	bus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
-
-	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus bus get failed: ") + dbus_error.message));
-
-	if(!bus_connection)
-		throw(DbusTinyException("dbus bus get failed (bus_connection = nullptr)"));
-
-	rv = dbus_bus_request_name(bus_connection, bus.c_str(), DBUS_NAME_FLAG_DO_NOT_QUEUE, &dbus_error);
-
-	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus request name failed: ") + dbus_error.message));
-
-	if(rv != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
-		throw(DbusTinyException("dbus request name: not primary owner: "));
-
-	pending_message = nullptr;
-	message_type = "";
-	message_interface = "";
-	message_method = "";
-	message_string_reply_0 = "";
-}
-
-void DbusTinyServer::register_signal(const std::string &interface)
-{
-	std::string filter;
-
-	filter = (boost::format("type='%s',interface='%s'") % "signal" % interface).str();
-
-	dbus_bus_add_match(bus_connection, filter.c_str(), &dbus_error);
-
-	dbus_connection_flush(bus_connection);
-
-	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus_bus_add_match failed: ") + dbus_error.message));
-}
-
-DbusTinyServer::~DbusTinyServer()
-{
-}
-
-void DbusTinyServer::get_message(std::string &type, std::string &interface, std::string &method)
-{
-	if(!dbus_connection_read_write_dispatch(bus_connection, -1))
-		throw(DbusTinyException("dbus_connection_read_write_dispatch failed"));
-
-	if(!(pending_message = dbus_connection_pop_message(bus_connection)))
-		throw(DbusTinyException("dbus_connection_pop_message failed"));
-
-	switch(dbus_message_get_type(pending_message))
+	try
 	{
-		case(DBUS_MESSAGE_TYPE_METHOD_CALL): type = "method call"; break;
-		case(DBUS_MESSAGE_TYPE_METHOD_RETURN): type = "method return"; break;
-		case(DBUS_MESSAGE_TYPE_ERROR): type = "error"; break;
-		case(DBUS_MESSAGE_TYPE_SIGNAL): type = "signal"; break;
-		default: type = "unknown"; break;
+		boost::program_options::options_description	options("usage");
+		boost::program_options::positional_options_description positional_options;
+
+		try
+		{
+			std::string service;
+			std::string method_interface;
+			std::vector<std::string> signal_interface;
+			std::string string_call_void;
+			std::string string_call_string;
+			std::string call_x_1;
+			std::string message_type;
+			std::string message_interface;
+			std::string message_method;
+
+			options.add_options()
+				("service,s",				boost::program_options::value<std::string>(&service)->required(),				"service to register")
+				("method-interface,i",		boost::program_options::value<std::string>(&method_interface)->required(),		"interface to use for registering methods")
+				("signal-interface,I",		boost::program_options::value<std::vector<std::string>>(&signal_interface),		"interfaces to use for registering signal")
+				("string-call-void,0",		boost::program_options::value<std::string>(&string_call_void)->required(),		"name to use for registering string-call-void method")
+				("string-call-string,1",	boost::program_options::value<std::string>(&string_call_string)->required(),	"name to use for registering string-call-string method")
+				("call-x-1,2",				boost::program_options::value<std::string>(&call_x_1)->required(),
+																"name to use for registering the method taking u32,u32,string,string and returning u64,u32,u32,string,double");
+
+			boost::program_options::variables_map varmap;
+			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(options).run(), varmap);
+			boost::program_options::notify(varmap);
+
+			DbusTinyServer dbus_server(service);
+
+			for(auto &signal: signal_interface)
+				dbus_server.register_signal(signal);
+
+			for(;;)
+			{
+				dbus_server.get_message(message_type, message_interface, message_method);
+
+				std::cout << "message received, type: " << message_type << ", interface: " << message_interface << ", method: " << message_method << std::endl;
+
+				if(message_type == "method call")
+				{
+					if((message_interface == "org.freedesktop.DBus.Introspectable") && (message_method == "Introspect"))
+					{
+						std::string reply = std::string() +
+								"<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\" \"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">\n" +
+								"<node>\n" +
+								"	<interface name=\"org.freedesktop.DBus.Introspectable\">\n" +
+								"		<method name=\"Introspect\">\n" +
+								"			<arg name=\"xml\" type=\"s\" direction=\"out\"/>\n" +
+								"		</method>\n" +
+								"	</interface>\n" +
+								"	<interface name=\"" + method_interface + "\">\n" +
+								"		<method name=\"" + string_call_void + "\">\n" +
+								"			<arg name=\"result\" type=\"s\" direction=\"out\"/>\n" +
+								"		</method>\n" +
+								"		<method name=\"" + string_call_string + "\">\n" +
+								"			<arg name=\"argument\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"result\" type=\"s\" direction=\"out\"/>\n" +
+								"		</method>\n" +
+								"		<method name=\"" + call_x_1 + "\">\n" +
+								"			<arg name=\"argument_1\" type=\"u\" direction=\"in\"/>\n" +
+								"			<arg name=\"argument_2\" type=\"u\" direction=\"in\"/>\n" +
+								"			<arg name=\"argument_3\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"argument_4\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"reply_1\" type=\"t\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_2\" type=\"u\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_3\" type=\"u\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" +
+								"		</method>\n" +
+								"	</interface>\n";
+
+						for(const auto &signal : signal_interface)
+						{
+							reply += std::string() +
+								"	<interface name=\"" + signal + "\">\n" +
+								"		<signal name=\"" + string_call_string + "\">\n" +
+								"			<arg name=\"argument\" type=\"s\"/>\n" +
+								"		</signal>\n" +
+								"	</interface>\n";
+						}
+
+						reply += "</node>\n";
+
+						dbus_server.send_string(reply);
+					}
+					else if((message_interface == method_interface) || (message_interface == ""))
+					{
+						if(message_method == string_call_void)
+						{
+							std::cout << "string call void method " << string_call_void << " method called\n";
+							dbus_server.send_string("string-call-void OK");
+						}
+						else if(message_method == string_call_string)
+						{
+							std::cout << "string call void method " << string_call_void << " method called with parameters: " << dbus_server.receive_string() << std::endl;
+							dbus_server.send_string("string-call-string OK");
+						}
+						else if(message_method == call_x_1)
+						{
+							uint32_t p0, p1;
+							std::string p2, p3;
+
+							dbus_server.receive_uint32_uint32_string_string(p0, p1, p2, p3);
+
+							std::cout << "x_1 method " << call_x_1 << " method called with parameters: " << p0 << " / " << p1 << " / " << p2 << " / " << p3 << std::endl;
+
+							dbus_server.send_uint64_uint32_uint32_string_double(time((time_t *)0), 0, 1, "call_x_1 OK", 123.456);
+						}
+						else
+							dbus_server.inform_error("unknown method");
+					}
+					else
+						dbus_server.inform_error("unknown interface");
+				}
+				else if(message_type == "method reply")
+				{
+					std::cerr << "unexpected message type, skip\n";
+					goto next;
+				}
+				else if(message_type == "error")
+				{
+					std::cerr << "unexpected message type, skip\n";
+					goto next;
+				}
+				else if(message_type == "signal")
+				{
+					std::cout << "signal received, method: " << message_method << ", " << "parameter: " << dbus_server.receive_string() << std::endl;
+				}
+				else
+				{
+					std::cout << "unknown message type, skip\n";
+					goto next;
+				}
+
+next:
+				dbus_server.reset();
+			}
+		}
+		catch(const boost::program_options::error &e)
+		{
+			throw((boost::format("program option exception: %s\n%s") % e.what() % options).str());
+		}
+		catch(const DbusTinyException &e)
+		{
+			throw((boost::format("error: %s") % e.what()).str());
+		}
+		catch(const std::exception &e)
+		{
+			throw((boost::format("standard exception: %s") % e.what()).str());
+		}
+		catch(const std::string &e)
+		{
+			throw((boost::format("error: %s ") % e).str());
+		}
+		catch(const char *e)
+		{
+			throw((boost::format("error: %s") % e).str());
+		}
+		catch(...)
+		{
+			throw(std::string("unknown exception"));
+		}
 	}
-
-	interface = dbus_message_get_interface(pending_message) ? : "";
-	method = dbus_message_get_member(pending_message);
-}
-
-void DbusTinyServer::get_message_swig()
-{
-	get_message(message_type, message_interface, message_method);
-}
-
-const std::string &DbusTinyServer::receive_string()
-{
-	const char *s1;
-
-	dbus_message_get_args(pending_message, &dbus_error, DBUS_TYPE_STRING, &s1, DBUS_TYPE_INVALID);
-
-	if(dbus_error_is_set(&dbus_error))
+	catch(const std::string &e)
 	{
-		dbus_error_free(&dbus_error);
-		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + dbus_error.message));
+		std::cerr << "server: " << e << std::endl;
 	}
-
-	message_string_reply_0 = s1;
-
-	return(message_string_reply_0);
-}
-
-void DbusTinyServer::receive_uint32_uint32_string_string(uint32_t &p1, uint32_t &p2, std::string &p3, std::string &p4)
-{
-	dbus_uint32_t s1, s2;
-	const char *s3, *s4;
-
-	dbus_message_get_args(pending_message, &dbus_error, DBUS_TYPE_UINT32, &s1, DBUS_TYPE_UINT32, &s2, DBUS_TYPE_STRING, &s3, DBUS_TYPE_STRING, &s4, DBUS_TYPE_INVALID);
-
-	if(dbus_error_is_set(&dbus_error))
-	{
-		dbus_error_free(&dbus_error);
-		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + dbus_error.message));
-	}
-
-	p1 = s1;
-	p2 = s2;
-	p3 = s3;
-	p4 = s4;
-}
-
-void DbusTinyServer::receive_uint32_uint32_string_string_swig()
-{
-	receive_uint32_uint32_string_string(rv_uint32_0, rv_uint32_1, rv_string_0, rv_string_1);
-}
-
-void DbusTinyServer::send_string(const std::string &reply_string)
-{
-	DBusMessage *reply_message;
-	const char *reply_cstr;
-
-	reply_cstr = reply_string.c_str();
-
-	if(!(reply_message = dbus_message_new_method_return(pending_message)))
-		throw(DbusTinyException("dbus_message_new_method_return failed"));
-
-	if(!dbus_message_append_args(reply_message, DBUS_TYPE_STRING, &reply_cstr, DBUS_TYPE_INVALID))
-	{
-		dbus_message_unref(reply_message);
-		throw(DbusTinyException("dbus_message_append_args failed"));
-	}
-
-	if(!dbus_connection_send(bus_connection, reply_message, NULL))
-	{
-		dbus_message_unref(reply_message);
-		throw(DbusTinyException("dbus_connection_send failed"));
-	}
-
-	dbus_message_unref(reply_message);
-}
-
-void DbusTinyServer::send_uint64_uint32_uint32_string_double(uint64_t p1, uint32_t p2, uint32_t p3, const std::string &p4, double p5)
-{
-	DBusMessage *reply_message;
-	const char *cstr;
-
-	cstr = p4.c_str();
-
-	if(!(reply_message = dbus_message_new_method_return(pending_message)))
-		throw(DbusTinyException("dbus_message_new_method_return failed"));
-
-	if(!dbus_message_append_args(reply_message, DBUS_TYPE_UINT64, &p1, DBUS_TYPE_UINT32, &p2, DBUS_TYPE_UINT32, &p3, DBUS_TYPE_STRING, &cstr, DBUS_TYPE_DOUBLE, &p5, DBUS_TYPE_INVALID))
-	{
-		dbus_message_unref(reply_message);
-		throw(DbusTinyException("dbus_message_append_args failed"));
-	}
-
-	if(!dbus_connection_send(bus_connection, reply_message, NULL))
-	{
-		dbus_message_unref(reply_message);
-		throw(DbusTinyException("dbus_connection_send failed"));
-	}
-
-	dbus_message_unref(reply_message);
-}
-
-const std::string &DbusTinyServer::inform_error(const std::string &reason)
-{
-	DBusMessage *error_message;
-
-	if(!(error_message = dbus_message_new_error(pending_message, DBUS_ERROR_FAILED, reason.c_str())))
-		throw(DbusTinyException("method error - error in dbus_message_new_error"));
-
-	if(!dbus_connection_send(bus_connection, error_message, NULL))
-		throw(DbusTinyException("method error - error in dbus_connection_send"));
-
-	dbus_message_unref(error_message);
-
-	return(reason);
-}
-
-void DbusTinyServer::reset()
-{
-	if(bus_connection)
-		dbus_connection_flush(bus_connection);
-
-	if(pending_message)
-	{
-		dbus_message_unref(pending_message);
-		pending_message = nullptr;
-	}
-}
-
-const std::string &DbusTinyServer::get_message_type()
-{
-	return(message_type);
-}
-
-const std::string &DbusTinyServer::get_message_interface()
-{
-	return(message_interface);
-}
-
-const std::string &DbusTinyServer::get_message_method()
-{
-	return(message_method);
-}
-
-uint32_t DbusTinyServer::get_rv_uint32_0()
-{
-	return(rv_uint32_0);
-}
-
-uint32_t DbusTinyServer::get_rv_uint32_1()
-{
-	return(rv_uint32_1);
-}
-
-const std::string &DbusTinyServer::get_rv_string_0()
-{
-	return(rv_string_0);
-}
-
-const std::string &DbusTinyServer::get_rv_string_1()
-{
-	return(rv_string_1);
 }

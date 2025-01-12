@@ -37,7 +37,12 @@ DBUS_LIBS		!=	pkg-config --libs dbus-1
 
 CPPFLAGS		:= -O3 -fPIC $(DBUS_CFLAGS) $(DBUS_LIBS) -lboost_program_options -I.
 
-OBJS			:= dbus-tiny.o dbus-tiny-server.o dbus-tiny-client.o 
+SERVER			:= dbus-tiny-server
+CLIENT			:= dbus-tiny-client
+
+LIBOBJS			:= exception.o server.o client.o
+LIB				:= libdbus-tiny.so
+EXECOBJS		:= $(SERVER).o $(CLIENT).o
 HDRS			:= dbus-tiny.h
 SWIG_DIR		:= DBUS
 SWIG_SRC		:= DBUS\:\:Tiny.i
@@ -51,15 +56,19 @@ SWIG_SO_2		:= $(SWIG_DIR)/Tiny.so
 .PRECIOUS:		*.cpp *.i
 .PHONY:			all swig
 
-all:			client server swig
+all:			$(LIB) $(SERVER) $(CLIENT) swig
 
 swig:			$(SWIG_PM_2) $(SWIG_SO_2)
 
 clean:
 				$(VECHO) "CLEAN"
-				-$(Q) rm -rf $(OBJS) client.o client $(SWIG_WRAP_SRC) $(SWIG_PM) $(SWIG_PM_2) $(SWIG_WRAP_OBJ) $(SWIG_SO) $(SWIG_SO_2) $(SWIG_DIR) 2> /dev/null
+				-$(Q) rm -rf $(LIBOBJS) $(EXECOBJS) $(SERVER) $(CLIENT) $(SWIG_WRAP_SRC) $(SWIG_PM) $(SWIG_PM_2) $(SWIG_WRAP_OBJ) $(SWIG_SO) $(SWIG_SO_2) $(SWIG_DIR) 2> /dev/null
 
+exception.o:	$(HDRS)
+server.o:		$(HDRS)
 client.o:		$(HDRS)
+$(SERVER).o:	$(HDRS)
+$(CLIENT).o:	$(HDRS)
 $(SWIG_PM):		$(HDRS)
 $(SWIG_SRC):	$(HDRS)
 
@@ -67,13 +76,17 @@ $(SWIG_SRC):	$(HDRS)
 				$(VECHO) "CPP $< -> $@"
 				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) -c $< -o $@
 
-client:			$(OBJS) client.o
-				$(VECHO) "LD $(OBJS) client.o -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) client.o -o $@
+$(LIB):			$(LIBOBJS)
+				$(VECHO) "LD $(LIBOBJS) -> $@"
+				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(LIBOBJS) -shared -o $@
 
-server:			$(OBJS) server.o
-				$(VECHO) "LD $(OBJS) server.o -> $@"
-				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(OBJS) server.o -o $@
+$(CLIENT):		$(CLIENT).o $(LIB)
+				$(VECHO) "LD $(CLIENT).o -> $@"
+				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(CLIENT).o -L. -ldbus-tiny -o $@
+
+$(SERVER):		$(SERVER).o $(LIB)
+				$(VECHO) "LD $(SERVER).o -> $@"
+				$(Q) $(CPP) $(CCWARNINGS) $(CPPFLAGS) $(SERVER).o -L. -ldbus-tiny -o $@
 
 $(SWIG_WRAP_SRC) $(SWIG_PM): $(SWIG_SRC)
 				$(VECHO) "SWIG $< -> $@"
@@ -84,9 +97,9 @@ $(SWIG_WRAP_OBJ):	$(SWIG_WRAP_SRC)
 				$(Q) $(CPP) $(CPPFLAGS) -Wno-unused-parameter \
 						`perl -MConfig -e 'print join(" ", @Config{qw(ccflags optimize cccdlflags)}, "-I$$Config{archlib}/CORE")'` -c $< -o $@
 
-$(SWIG_SO):		$(SWIG_WRAP_OBJ) $(OBJS)
+$(SWIG_SO):		$(SWIG_WRAP_OBJ) $(LIBOBJS)
 				$(VECHO) "SWIG LD $< -> $@"
-				$(Q) $(CPP) $(CPPFLAGS) `perl -MConfig -e 'print $$Config{lddlflags}'` $(SWIG_WRAP_OBJ) $(OBJS) -o $@
+				$(Q) $(CPP) $(CPPFLAGS) `perl -MConfig -e 'print $$Config{lddlflags}'` $(SWIG_WRAP_OBJ) $(LIBOBJS) -o $@
 
 $(SWIG_PM_2):	$(SWIG_PM)
 				$(VECHO) "SWIG FINISH PM $< -> $@"
