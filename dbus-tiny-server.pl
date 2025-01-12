@@ -26,16 +26,19 @@ GetOptions(
 
 try
 {
-
 	if(!defined($service))
 	{
-		print STDERR ("usage: dbus-tiny-server.pl\n");
-		print STDERR ("       -s|--service <service>\n");
-		print STDERR ("       -i|--method-interface <interface>\n");
-		print STDERR ("       -I|--signal-interface <interface> (optional, may be repeated)\n");
-		print STDERR ("       -0|--string-call-void <method>\n");
-		print STDERR ("       -1|--string-call-string <method>\n");
-		print STDERR ("       -2|--call-x-1 <method>\n");
+		my($usage);
+
+		$usage .= "usage: dbus-tiny-server.pl\n";
+		$usage .= "       -s|--service <service>\n";
+		$usage .= "       -i|--method-interface <interface>\n";
+		$usage .= "       -I|--signal-interface <interface> (optional, may be repeated)\n";
+		$usage .= "       -0|--string-call-void <method>\n";
+		$usage .= "       -1|--string-call-string <method>\n";
+		$usage .= "       -2|--call-x-1 <method>\n";
+
+		die($usage);
 	}
 
 	my($dbus_server) = new DBUS::Tiny::DbusTinyServer($service);
