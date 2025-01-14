@@ -11,13 +11,18 @@
 DbusTinyServer::DbusTinyServer(const std::string &bus)
 {
 	int rv;
+	std::string error_message;
 
 	dbus_error_init(&dbus_error);
 
 	bus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
 
 	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus bus get failed: ") + dbus_error.message));
+	{
+		error_message = dbus_error.message;
+		dbus_error_free(&dbus_error);
+		throw(DbusTinyException(std::string("dbus bus get failed: ") + error_message));
+	}
 
 	if(!bus_connection)
 		throw(DbusTinyException("dbus bus get failed (bus_connection = nullptr)"));
@@ -25,7 +30,11 @@ DbusTinyServer::DbusTinyServer(const std::string &bus)
 	rv = dbus_bus_request_name(bus_connection, bus.c_str(), DBUS_NAME_FLAG_DO_NOT_QUEUE, &dbus_error);
 
 	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus request name failed: ") + dbus_error.message));
+	{
+		error_message = dbus_error.message;
+		dbus_error_free(&dbus_error);
+		throw(DbusTinyException(std::string("dbus request name failed: ") + error_message));
+	}
 
 	if(rv != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
 		throw(DbusTinyException("dbus request name: not primary owner: "));
@@ -37,9 +46,14 @@ DbusTinyServer::DbusTinyServer(const std::string &bus)
 	message_string_reply_0 = "";
 }
 
+DbusTinyServer::~DbusTinyServer()
+{
+}
+
 void DbusTinyServer::register_signal(const std::string &interface)
 {
 	std::string filter;
+	std::string error_message;
 
 	filter = (boost::format("type='%s',interface='%s'") % "signal" % interface).str();
 
@@ -48,11 +62,11 @@ void DbusTinyServer::register_signal(const std::string &interface)
 	dbus_connection_flush(bus_connection);
 
 	if(dbus_error_is_set(&dbus_error))
-		throw(DbusTinyException(std::string("dbus_bus_add_match failed: ") + dbus_error.message));
-}
-
-DbusTinyServer::~DbusTinyServer()
-{
+	{
+		error_message = dbus_error.message;
+		dbus_error_free(&dbus_error);
+		throw(DbusTinyException(std::string("dbus_bus_add_match failed: ") + error_message));
+	}
 }
 
 void DbusTinyServer::get_message(std::string &type, std::string &interface, std::string &method)
@@ -111,13 +125,15 @@ void DbusTinyServer::get_message_swig()
 const std::string &DbusTinyServer::receive_string()
 {
 	const char *s1;
+	std::string error_message;
 
 	dbus_message_get_args(pending_message, &dbus_error, DBUS_TYPE_STRING, &s1, DBUS_TYPE_INVALID);
 
 	if(dbus_error_is_set(&dbus_error))
 	{
+		error_message = dbus_error.message;
 		dbus_error_free(&dbus_error);
-		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + dbus_error.message));
+		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + error_message));
 	}
 
 	message_string_reply_0 = s1;
@@ -129,13 +145,15 @@ void DbusTinyServer::receive_uint32_uint32_string_string(uint32_t &p1, uint32_t 
 {
 	dbus_uint32_t s1, s2;
 	const char *s3, *s4;
+	std::string error_message;
 
 	dbus_message_get_args(pending_message, &dbus_error, DBUS_TYPE_UINT32, &s1, DBUS_TYPE_UINT32, &s2, DBUS_TYPE_STRING, &s3, DBUS_TYPE_STRING, &s4, DBUS_TYPE_INVALID);
 
 	if(dbus_error_is_set(&dbus_error))
 	{
+		error_message = dbus_error.message;
 		dbus_error_free(&dbus_error);
-		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + dbus_error.message));
+		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + error_message));
 	}
 
 	p1 = s1;
