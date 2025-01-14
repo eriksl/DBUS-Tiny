@@ -57,12 +57,39 @@ DbusTinyServer::~DbusTinyServer()
 
 void DbusTinyServer::get_message(std::string &type, std::string &interface, std::string &method)
 {
-	if(!dbus_connection_read_write_dispatch(bus_connection, -1))
-		throw(DbusTinyException("dbus_connection_read_write_dispatch failed"));
+	if((pending_message = dbus_connection_pop_message(bus_connection)))
+		goto done;
+
+	dbus_connection_flush(bus_connection);
+
+	if(!dbus_connection_read_write(bus_connection, -1))
+		throw(DbusTinyException("dbus_connection_read_write failed"));
+
+	if((pending_message = dbus_connection_pop_message(bus_connection)))
+		goto done;
+
+	while(dbus_connection_dispatch(bus_connection) != DBUS_DISPATCH_COMPLETE)
+	{
+		std::cerr << "* call dispatch\n";
+
+		if((pending_message = dbus_connection_pop_message(bus_connection)))
+		{
+			std::cerr << "* pop succeeded @3\n";
+			goto done;
+		}
+
+		std::cerr << "* repeating dispatch\n";
+	}
 
 	if(!(pending_message = dbus_connection_pop_message(bus_connection)))
-		throw(DbusTinyException("dbus_connection_pop_message failed"));
+	{
+		std::cerr << "* pop succeeded @4\n";
+		goto done;
+	}
 
+	throw(DbusTinyException("dispatch/pop failed"));
+
+done:
 	switch(dbus_message_get_type(pending_message))
 	{
 		case(DBUS_MESSAGE_TYPE_METHOD_CALL): type = "method call"; break;
