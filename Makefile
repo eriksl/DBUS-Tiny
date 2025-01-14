@@ -15,6 +15,7 @@ CPP				:=	g++
 
 DBUS_CFLAGS		!=	pkg-config --cflags dbus-1
 DBUS_LIBS		!=	pkg-config --libs dbus-1
+CWD				!=	pwd
 
 CPPFLAGS		:= -O3 -fPIC $(DBUS_CFLAGS) $(DBUS_LIBS) -lboost_program_options -I.
 
@@ -63,11 +64,11 @@ $(LIB):			$(LIBOBJS)
 
 $(CLIENT):		$(CLIENT).o $(LIB)
 				$(VECHO) "LD $(CLIENT).o -> $@"
-				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(CLIENT).o -L. -ldbus-tiny -Wl,-rpath=$(PWD) -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(CLIENT).o -L. -ldbus-tiny -Wl,-rpath=$(CWD) -o $@
 
 $(SERVER):		$(SERVER).o $(LIB)
 				$(VECHO) "LD $(SERVER).o -> $@"
-				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(SERVER).o -L. -ldbus-tiny -Wl,-rpath=$(PWD) -o $@
+				$(Q) $(CPP) @gcc-warnings $(CPPFLAGS) $(SERVER).o -L. -ldbus-tiny -Wl,-rpath=$(CWD) -o $@
 
 $(SWIG_WRAP_SRC) $(SWIG_PM): $(SWIG_SRC)
 				$(VECHO) "SWIG $< -> $@"
