@@ -20,6 +20,7 @@ int main(int argc, const char **argv)
 			std::string string_call_void;
 			std::string string_call_string;
 			std::string call_x_1;
+			std::string call_x_2;
 			std::string message_type;
 			std::string message_interface;
 			std::string message_method;
@@ -28,10 +29,11 @@ int main(int argc, const char **argv)
 				("service,s",				boost::program_options::value<std::string>(&service)->required(),				"service to register")
 				("method-interface,i",		boost::program_options::value<std::string>(&method_interface)->required(),		"interface to use for registering methods")
 				("signal-interface,I",		boost::program_options::value<std::vector<std::string>>(&signal_interface),		"interfaces to use for registering signal")
-				("string-call-void,0",		boost::program_options::value<std::string>(&string_call_void)->required(),		"name to use for registering string-call-void method")
-				("string-call-string,1",	boost::program_options::value<std::string>(&string_call_string)->required(),	"name to use for registering string-call-string method")
-				("call-x-1,2",				boost::program_options::value<std::string>(&call_x_1)->required(),
-																"name to use for registering the method taking u32,u32,string,string and returning u64,u32,u32,string,double");
+				("string-call-void,v",		boost::program_options::value<std::string>(&string_call_void)->required(),		"name to use for registering string-call-void method")
+				("string-call-string,c",	boost::program_options::value<std::string>(&string_call_string)->required(),	"name to use for registering string-call-string method")
+				("call-x-1,1",				boost::program_options::value<std::string>(&call_x_1)->required(),
+																"name to use for registering the method taking u32,u32,string,string and returning u64,u32,u32,string,double")
+				("call-x-2,2",				boost::program_options::value<std::string>(&call_x_2)->required(), "name to use for registering the method u64,3xstring,4xdouble");
 
 			boost::program_options::variables_map varmap;
 			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(options).run(), varmap);
@@ -79,6 +81,16 @@ int main(int argc, const char **argv)
 								"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" +
 								"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" +
 								"		</method>\n" +
+								"		<method name=\"" + call_x_2 + "\">\n" +
+								"			<arg name=\"reply_1\" type=\"t\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_2\" type=\"u\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_3\" type=\"u\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_6\" type=\"d\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_7\" type=\"d\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_8\" type=\"d\" direction=\"out\"/>\n" +
+								"		</method>\n" +
 								"	</interface>\n";
 
 						for(const auto &signal : signal_interface)
@@ -117,6 +129,12 @@ int main(int argc, const char **argv)
 							std::cout << "x_1 method " << call_x_1 << " method called with parameters: " << p0 << " / " << p1 << " / " << p2 << " / " << p3 << std::endl;
 
 							dbus_server.send_uint64_uint32_uint32_string_double(time((time_t *)0), 0, 1, "call_x_1 OK", 123.456);
+						}
+						else if(message_method == call_x_2)
+						{
+							std::cout << "x_2 method " << call_x_2 << " method called\n";
+
+							dbus_server.send_uint64_x3string_x4double(time((time_t *)0), "string 1", "string 2", "string 3", 0.0, 1.1, 2.2, 3.3);
 						}
 						else
 							dbus_server.inform_error("unknown method");

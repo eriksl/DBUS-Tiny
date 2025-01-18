@@ -9,7 +9,7 @@
 -Wunsafe-loop-optimizations -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings
 -Wsequence-point -Wlogical-op -Wlogical-not-parentheses -Wredundant-decls -Wvla
 -Wdisabled-optimization -Wunreachable-code -Wparentheses -Wmissing-declarations
--Wcast-align -Winline -Wmultistatement-macros -Warray-bounds=2
+-Wcast-align -Wmultistatement-macros -Warray-bounds=2
 -Wno-error=cast-qual
 -Wno-error=unsafe-loop-optimizations
 -Wno-packed

@@ -11,7 +11,7 @@ use Data::Dumper;
 
 my($service);
 my($method_interface, @signal_interface);
-my($string_call_void, $string_call_string, $call_x_1);
+my($string_call_void, $string_call_string, $call_x_1, $call_x_2);
 my($message_type, $message_interface, $message_method);
 my($signal);
 
@@ -19,9 +19,10 @@ GetOptions(
 		"service|s=s"				=> \$service,
 		"method-interface|i=s"		=> \$method_interface,
 		"signal-interface|I=s"		=> \@signal_interface,
-		"string-call-void|0=s"		=> \$string_call_void,
-		"string-call-string|1=s"	=> \$string_call_string,
-		"call-x-1|2=s"				=> \$call_x_1,
+		"string-call-void|v=s"		=> \$string_call_void,
+		"string-call-string|c=s"	=> \$string_call_string,
+		"call-x-1|1=s"				=> \$call_x_1,
+		"call-x-2|2=s"				=> \$call_x_2,
 );
 
 try
@@ -34,12 +35,15 @@ try
 		$usage .= "       -s|--service <service>\n";
 		$usage .= "       -i|--method-interface <interface>\n";
 		$usage .= "       -I|--signal-interface <interface> (optional, may be repeated)\n";
-		$usage .= "       -0|--string-call-void <method>\n";
-		$usage .= "       -1|--string-call-string <method>\n";
-		$usage .= "       -2|--call-x-1 <method>\n";
+		$usage .= "       -v|--string-call-void <method>\n";
+		$usage .= "       -c|--string-call-string <method>\n";
+		$usage .= "       -1|--call-x-1 <method>\n";
+		$usage .= "       -2|--call-x-2 <method>\n";
 
 		die($usage);
 	}
+
+	$method_interface = "" if(!defined($method_interface));
 
 	my($dbus_server) = new DBUS::Tiny::DbusTinyServer($service);
 
@@ -88,6 +92,16 @@ try
 						"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" .
 						"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" .
 						"		</method>\n" .
+						"		<method name=\"" . $call_x_2 . "\">\n" .
+						"			<arg name=\"reply_1\" type=\"t\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_2\" type=\"u\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_3\" type=\"u\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_6\" type=\"d\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_7\" type=\"d\" direction=\"out\"/>\n" .
+						"			<arg name=\"reply_8\" type=\"d\" direction=\"out\"/>\n" .
+						"		</method>\n" .
 						"	</interface>\n";
 
 				foreach $signal (@signal_interface)
@@ -130,6 +144,12 @@ try
 					printf STDERR ("x_1 method %s method called with parameters: %u / %u / %s / %s\n", $call_x_1, $p0, $p1, $p2, $p3);
 
 					$dbus_server->send_uint64_uint32_uint32_string_double(time(), 0, 1, "call_x_1 OK", 123.456);
+				}
+				elsif($message_method eq $call_x_2)
+				{
+					printf STDERR ("x_2 method called\n");
+
+					$dbus_server->send_uint64_x3string_x4double(time(), "string 1", "string 2", "string 3", 1.1, 2.2, 3.3, 4.4);
 				}
 				else
 				{

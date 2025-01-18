@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+
 use Getopt::Long qw(:config gnu_compat noignore_case);
 use Try::Tiny;
 use Scalar::Util;
@@ -15,6 +16,7 @@ my($interface);
 my($string_call_void);
 my($string_call_string);
 my($call_x_1);
+my($call_x_2);
 my($signal_string);
 my(@arguments);
 my($argument);
@@ -24,11 +26,12 @@ GetOptions(
 		"service|s=s"				=> \$service,
 		"interface|i=s"				=> \$interface,
 		"introspect|I"				=> \$introspect,
-		"string-call-void|0=s"		=> \$string_call_void,
-		"string-call-string|1=s"	=> \$string_call_string,
-		"call-x-1|2=s"				=> \$call_x_1,
-		"signal-string|3=s"			=> \$signal_string,
-		"argument=s"				=> \@arguments,
+		"string-call-void|v=s"		=> \$string_call_void,
+		"string-call-string|c=s"	=> \$string_call_string,
+		"call-x-1|1=s"				=> \$call_x_1,
+		"call-x-2|2=s"				=> \$call_x_2,
+		"signal-string|S=s"			=> \$signal_string,
+		"argument|a=s"				=> \@arguments,
 );
 
 try
@@ -41,10 +44,11 @@ try
 		print STDERR ("       -s|--service <service>\n");
 		print STDERR ("       -i|--interface <interface> (optional for method calling)\n");
 		print STDERR ("       -I|--introspect (introspect)\n");
-		print STDERR ("       -0|--string-call-void <method>\n");
-		print STDERR ("       -1|--string-call-string <method>\n");
-		print STDERR ("       -2|--call-x-1 <method>\n");
-		print STDERR ("       -3|--signal-string <method>\n");
+		print STDERR ("       -v|--string-call-void <method>\n");
+		print STDERR ("       -c|--string-call-string <method>\n");
+		print STDERR ("       -1|--call-x-1 <method>\n");
+		print STDERR ("       -2|--call-x-2 <method>\n");
+		print STDERR ("       -S|--signal-string <method>\n");
 		print STDERR ("       -a|--argument <argument> (may be repeated)\n");
 	}
 
@@ -94,6 +98,26 @@ try
 		$r4 = $dbus_client->get_rv_double_0();
 
 		printf ("results: %llu/%lu/%lu/%f:%s\n", $r1, $r2, $r3, $r4, $r5);
+	}
+	elsif(defined($call_x_2))
+	{
+		my($r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7);
+
+		die("call_x_2 takes no arguments") if(scalar(@arguments) != 0);
+
+		$dbus_client->send_void($service, $interface, $call_x_2);
+		$dbus_client->receive_uint64_x3string_x4double();
+
+		$r0 = $dbus_client->get_rv_uint64_0();
+		$r1 = $dbus_client->get_rv_string_0();
+		$r2 = $dbus_client->get_rv_string_1();
+		$r3 = $dbus_client->get_rv_string_2();
+		$r4 = $dbus_client->get_rv_double_0();
+		$r5 = $dbus_client->get_rv_double_1();
+		$r6 = $dbus_client->get_rv_double_2();
+		$r7 = $dbus_client->get_rv_double_3();
+
+		printf ("%llu / %s / %s / %s / %f / %f / %f / %f\n", $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7);
 	}
 	elsif(defined($signal_string))
 	{

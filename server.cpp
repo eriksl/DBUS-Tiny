@@ -217,6 +217,35 @@ void DbusTinyServer::send_uint64_uint32_uint32_string_double(uint64_t p1, uint32
 	dbus_message_unref(reply_message);
 }
 
+void DbusTinyServer::send_uint64_x3string_x4double(uint64_t p0, const std::string &p1, const std::string &p2, const std::string &p3, double p4, double p5, double p6, double p7)
+{
+	DBusMessage *reply_message;
+	const char *p1cs, *p2cs, *p3cs;
+
+	p1cs = p1.c_str();
+	p2cs = p2.c_str();
+	p3cs = p3.c_str();
+
+	if(!(reply_message = dbus_message_new_method_return(pending_message)))
+		throw(DbusTinyException("dbus_message_new_method_return failed"));
+
+	if(!dbus_message_append_args(reply_message,
+				DBUS_TYPE_UINT64, &p0, DBUS_TYPE_STRING, &p1cs, DBUS_TYPE_STRING, &p2cs, DBUS_TYPE_STRING, &p3cs,
+				DBUS_TYPE_DOUBLE, &p4, DBUS_TYPE_DOUBLE, &p5, DBUS_TYPE_DOUBLE, &p6, DBUS_TYPE_DOUBLE, &p7, DBUS_TYPE_INVALID))
+	{
+		dbus_message_unref(reply_message);
+		throw(DbusTinyException("dbus_message_append_args failed"));
+	}
+
+	if(!dbus_connection_send(bus_connection, reply_message, NULL))
+	{
+		dbus_message_unref(reply_message);
+		throw(DbusTinyException("dbus_connection_send failed"));
+	}
+
+	dbus_message_unref(reply_message);
+}
+
 const std::string &DbusTinyServer::inform_error(const std::string &reason)
 {
 	DBusMessage *error_message;
