@@ -17,10 +17,6 @@ int main(int argc, const char **argv)
 			std::string service;
 			std::string method_interface;
 			std::vector<std::string> signal_interface;
-			std::string string_call_void;
-			std::string string_call_string;
-			std::string call_x_1;
-			std::string call_x_2;
 			std::string message_type;
 			std::string message_interface;
 			std::string message_method;
@@ -28,12 +24,7 @@ int main(int argc, const char **argv)
 			options.add_options()
 				("service,s",				boost::program_options::value<std::string>(&service)->required(),				"service to register")
 				("method-interface,i",		boost::program_options::value<std::string>(&method_interface)->required(),		"interface to use for registering methods")
-				("signal-interface,I",		boost::program_options::value<std::vector<std::string>>(&signal_interface),		"interfaces to use for registering signal")
-				("string-call-void,v",		boost::program_options::value<std::string>(&string_call_void)->required(),		"name to use for registering string-call-void method")
-				("string-call-string,c",	boost::program_options::value<std::string>(&string_call_string)->required(),	"name to use for registering string-call-string method")
-				("call-x-1,1",				boost::program_options::value<std::string>(&call_x_1)->required(),
-																"name to use for registering the method taking u32,u32,string,string and returning u64,u32,u32,string,double")
-				("call-x-2,2",				boost::program_options::value<std::string>(&call_x_2)->required(), "name to use for registering the method u64,3xstring,4xdouble");
+				("signal-interface,I",		boost::program_options::value<std::vector<std::string>>(&signal_interface),		"interfaces to use for registering signal");
 
 			boost::program_options::variables_map varmap;
 			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(options).run(), varmap);
@@ -63,14 +54,14 @@ int main(int argc, const char **argv)
 								"		</method>\n" +
 								"	</interface>\n" +
 								"	<interface name=\"" + method_interface + "\">\n" +
-								"		<method name=\"" + string_call_void + "\">\n" +
+								"		<method name=\"string_call_void\">\n" +
 								"			<arg name=\"result\" type=\"s\" direction=\"out\"/>\n" +
 								"		</method>\n" +
-								"		<method name=\"" + string_call_string + "\">\n" +
+								"		<method name=\"string_call_string\">\n" +
 								"			<arg name=\"argument\" type=\"s\" direction=\"in\"/>\n" +
 								"			<arg name=\"result\" type=\"s\" direction=\"out\"/>\n" +
 								"		</method>\n" +
-								"		<method name=\"" + call_x_1 + "\">\n" +
+								"		<method name=\"call_x_1\">\n" +
 								"			<arg name=\"argument_1\" type=\"u\" direction=\"in\"/>\n" +
 								"			<arg name=\"argument_2\" type=\"u\" direction=\"in\"/>\n" +
 								"			<arg name=\"argument_3\" type=\"s\" direction=\"in\"/>\n" +
@@ -81,7 +72,7 @@ int main(int argc, const char **argv)
 								"			<arg name=\"reply_4\" type=\"s\" direction=\"out\"/>\n" +
 								"			<arg name=\"reply_5\" type=\"d\" direction=\"out\"/>\n" +
 								"		</method>\n" +
-								"		<method name=\"" + call_x_2 + "\">\n" +
+								"		<method name=\"call_x_2\">\n" +
 								"			<arg name=\"reply_1\" type=\"t\" direction=\"out\"/>\n" +
 								"			<arg name=\"reply_2\" type=\"u\" direction=\"out\"/>\n" +
 								"			<arg name=\"reply_3\" type=\"u\" direction=\"out\"/>\n" +
@@ -97,7 +88,7 @@ int main(int argc, const char **argv)
 						{
 							reply += std::string() +
 								"	<interface name=\"" + signal + "\">\n" +
-								"		<signal name=\"" + string_call_string + "\">\n" +
+								"		<signal name=\"string_call_string\">\n" +
 								"			<arg name=\"argument\" type=\"s\"/>\n" +
 								"		</signal>\n" +
 								"	</interface>\n";
@@ -109,30 +100,30 @@ int main(int argc, const char **argv)
 					}
 					else if((message_interface == method_interface) || (message_interface == ""))
 					{
-						if(message_method == string_call_void)
+						if(message_method == "string_call_void")
 						{
-							std::cout << "string call void method " << string_call_void << " method called\n";
+							std::cout << "string_call_void method called\n";
 							dbus_server.send_string("string-call-void OK");
 						}
-						else if(message_method == string_call_string)
+						else if(message_method == "string_call_string")
 						{
-							std::cout << "string call void method " << string_call_void << " method called with parameters: " << dbus_server.receive_string() << std::endl;
+							std::cout << "string_call_string method called with parameters: " << dbus_server.receive_string() << std::endl;
 							dbus_server.send_string("string-call-string OK");
 						}
-						else if(message_method == call_x_1)
+						else if(message_method == "call_x_1")
 						{
 							uint32_t p0, p1;
 							std::string p2, p3;
 
 							dbus_server.receive_uint32_uint32_string_string(p0, p1, p2, p3);
 
-							std::cout << "x_1 method " << call_x_1 << " method called with parameters: " << p0 << " / " << p1 << " / " << p2 << " / " << p3 << std::endl;
+							std::cout << "x_1 method called with parameters: " << p0 << " / " << p1 << " / " << p2 << " / " << p3 << std::endl;
 
 							dbus_server.send_uint64_uint32_uint32_string_double(time((time_t *)0), 0, 1, "call_x_1 OK", 123.456);
 						}
-						else if(message_method == call_x_2)
+						else if(message_method == "call_x_2")
 						{
-							std::cout << "x_2 method " << call_x_2 << " method called\n";
+							std::cout << "x_2 method called\n";
 
 							dbus_server.send_uint64_x3string_x4double(time((time_t *)0), "string 1", "string 2", "string 3", 0.0, 1.1, 2.2, 3.3);
 						}
