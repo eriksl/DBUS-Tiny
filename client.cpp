@@ -24,6 +24,8 @@ DbusTinyClient::DbusTinyClient()
 	rv_string_1 = "";
 	rv_string_2 = "";
 	rv_uint64_0 = 0;
+	rv_uint64_1 = 0;
+	rv_uint64_2 = 0;
 	rv_uint32_0 = 0;
 	rv_uint32_1 = 0;
 	rv_double_0 = 0;
@@ -179,6 +181,72 @@ void DbusTinyClient::send_uint32_uint32_string_string(const std::string &service
 	catch(const DbusTinyInternalException &e)
 	{
 		std::string rv = std::string("send_uint32_uint32_string_string: ") + e.what();
+
+		if(dbus_error_is_set(&dbus_error))
+		{
+			dbus_error_free(&dbus_error);
+			rv += std::string(" (dbus error: ") + dbus_error.message + ")";
+		}
+
+		if(pending_call)
+		{
+			dbus_pending_call_unref(pending_call);
+			pending_call = nullptr;
+		}
+
+		if(request_message)
+			dbus_message_unref(request_message);
+
+		throw(DbusTinyException(rv));
+	}
+
+	dbus_connection_flush(bus_connection);
+	dbus_message_unref(request_message);
+}
+
+void DbusTinyClient::send_x3string(const std::string &service, const std::string &interface, const std::string &method, const std::string &p0, const std::string &p1, const std::string &p2)
+{
+	DBusMessage *request_message;
+
+	try
+	{
+		const char *s0, *s1, *s2;
+
+		request_message = nullptr;
+		pending_call = nullptr;
+
+		if(!domain_valid(service))
+			throw(DbusTinyInternalException("invalid service"));
+
+		if((interface != "") && !domain_valid(interface))
+			throw(DbusTinyInternalException("invalid interface"));
+
+		if(method.find('-') != std::string::npos)
+			throw(DbusTinyInternalException("invalid method name in dbus_message_new_method_call"));
+
+		if(!(request_message = dbus_message_new_method_call(service.c_str(), "/", (interface == "") ? nullptr : interface.c_str(), method.c_str())))
+			throw(DbusTinyInternalException("error in dbus_message_new_method_call"));
+
+		s0 = p0.c_str();
+		s1 = p1.c_str();
+		s2 = p2.c_str();
+
+		if(!dbus_message_append_args(request_message,
+					DBUS_TYPE_STRING, &s0,
+					DBUS_TYPE_STRING, &s1,
+					DBUS_TYPE_STRING, &s2,
+					DBUS_TYPE_INVALID))
+			throw(DbusTinyInternalException("error in dbus_message_append_args"));
+
+		if(!dbus_connection_send_with_reply(bus_connection, request_message, &pending_call, -1))
+			throw(DbusTinyInternalException("error in dbus_connection_send_with_reply"));
+
+		if(!pending_call)
+			throw(DbusTinyInternalException("pending connection is nullptr in dbus_connection_send_with_reply"));
+	}
+	catch(const DbusTinyInternalException &e)
+	{
+		std::string rv = std::string("send_x3string: ") + e.what();
 
 		if(dbus_error_is_set(&dbus_error))
 		{
@@ -406,6 +474,76 @@ void DbusTinyClient::receive_uint64_x3string_x4double_swig()
 	receive_uint64_x3string_x4double(rv_uint64_0, rv_string_0, rv_string_1, rv_string_2, rv_double_0, rv_double_1, rv_double_2, rv_double_3);
 }
 
+void DbusTinyClient::receive_uint32_x3uint64(uint32_t &p0, uint64_t &p1, uint64_t &p2, uint64_t &p3)
+{
+	DBusMessage *reply_message = nullptr;
+
+	try
+	{
+		const char *p1cs;
+
+		if(!pending_call)
+			throw(DbusTinyInternalException("no call pending"));
+
+		dbus_pending_call_block(pending_call);
+
+		if(!(reply_message = dbus_pending_call_steal_reply(pending_call)))
+			throw(DbusTinyInternalException("nullptr in dbus_pending_call_steal_reply"));
+
+		dbus_pending_call_unref(pending_call);
+		pending_call = nullptr;
+
+		if(dbus_message_get_type(reply_message) == DBUS_MESSAGE_TYPE_ERROR)
+		{
+			dbus_message_get_args(reply_message, &dbus_error, DBUS_TYPE_STRING, &p1cs, DBUS_TYPE_INVALID);
+
+			if(dbus_error_is_set(&dbus_error))
+				throw(DbusTinyInternalException("error in dbus_message_get_args while processing error"));
+
+			throw(DbusTinyInternalException(boost::format("error while receiving reply: %s") % p1cs));
+		}
+
+		dbus_message_get_args(reply_message, &dbus_error,
+
+				DBUS_TYPE_UINT32, &p0,
+				DBUS_TYPE_UINT64, &p1,
+				DBUS_TYPE_UINT64, &p2,
+				DBUS_TYPE_UINT64, &p3,
+				DBUS_TYPE_INVALID);
+
+		if(dbus_error_is_set(&dbus_error))
+			throw(DbusTinyInternalException("error in dbus_message_get_args"));
+
+		dbus_message_unref(reply_message);
+	}
+	catch(const DbusTinyInternalException &e)
+	{
+		std::string e1 = std::string("receive_uint32_x3uint64: ") + e.what();
+
+		if(dbus_error_is_set(&dbus_error))
+		{
+			dbus_error_free(&dbus_error);
+			e1 += std::string(" (dbus error: ") + dbus_error.message + ")";
+		}
+
+		if(reply_message)
+			dbus_message_unref(reply_message);
+
+		if(pending_call)
+		{
+			dbus_pending_call_unref(pending_call);
+			pending_call = nullptr;
+		}
+
+		throw(DbusTinyException(e1));
+	}
+}
+
+void DbusTinyClient::receive_uint32_x3uint64_swig()
+{
+	receive_uint32_x3uint64(rv_uint32_0, rv_uint64_0, rv_uint64_1, rv_uint64_2);
+}
+
 void DbusTinyClient::signal_string(const std::string &service, const std::string &interface, const std::string &signal, const std::string &parameter)
 {
 	DBusMessage *signal_message;
@@ -475,6 +613,16 @@ const std::string &DbusTinyClient::get_rv_string_2()
 uint64_t DbusTinyClient::get_rv_uint64_0()
 {
 	return(rv_uint64_0);
+}
+
+uint64_t DbusTinyClient::get_rv_uint64_1()
+{
+	return(rv_uint64_1);
+}
+
+uint64_t DbusTinyClient::get_rv_uint64_2()
+{
+	return(rv_uint64_2);
 }
 
 uint32_t DbusTinyClient::get_rv_uint32_0()

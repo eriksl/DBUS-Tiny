@@ -17,6 +17,7 @@ my($string_call_void);
 my($string_call_string);
 my($call_x_1);
 my($call_x_2);
+my($call_x_3);
 my($signal_string);
 my(@arguments);
 my($argument);
@@ -30,6 +31,7 @@ GetOptions(
 		"string-call-string|c=s"	=> \$string_call_string,
 		"call-x-1|1=s"				=> \$call_x_1,
 		"call-x-2|2=s"				=> \$call_x_2,
+		"call-x-3|3=s"				=> \$call_x_3,
 		"signal-string|S=s"			=> \$signal_string,
 		"argument|a=s"				=> \@arguments,
 );
@@ -118,6 +120,22 @@ try
 		$r7 = $dbus_client->get_rv_double_3();
 
 		printf ("%llu / %s / %s / %s / %f / %f / %f / %f\n", $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7);
+	}
+	elsif(defined($call_x_3))
+	{
+		my($r0, $r1, $r2, $r3, $r4, $r5);
+
+		die("call_x_3 takes three arguments: string, string, string") if(scalar(@arguments) != 3);
+
+		$dbus_client->send_x3string($service, $interface, $call_x_3, $arguments[0], $arguments[1], $arguments[2]);
+		$dbus_client->receive_uint32_x3uint64();
+
+		$r0 = $dbus_client->get_rv_uint32_0();
+		$r1 = $dbus_client->get_rv_uint64_0();
+		$r2 = $dbus_client->get_rv_uint64_1();
+		$r3 = $dbus_client->get_rv_uint64_2();
+
+		printf ("results: %u / %llu / %llu / %llu\n", $r0, $r1, $r2, $r3);
 	}
 	elsif(defined($signal_string))
 	{

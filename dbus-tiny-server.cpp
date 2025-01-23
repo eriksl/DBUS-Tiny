@@ -82,6 +82,15 @@ int main(int argc, const char **argv)
 								"			<arg name=\"reply_7\" type=\"d\" direction=\"out\"/>\n" +
 								"			<arg name=\"reply_8\" type=\"d\" direction=\"out\"/>\n" +
 								"		</method>\n" +
+								"		<method name=\"call_x_3\">\n" +
+								"			<arg name=\"argument_1\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"argument_2\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"argument_3\" type=\"s\" direction=\"in\"/>\n" +
+								"			<arg name=\"reply_1\" type=\"u\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_2\" type=\"t\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_3\" type=\"t\" direction=\"out\"/>\n" +
+								"			<arg name=\"reply_4\" type=\"t\" direction=\"out\"/>\n" +
+								"		</method>\n" +
 								"	</interface>\n";
 
 						for(const auto &signal : signal_interface)
@@ -126,6 +135,16 @@ int main(int argc, const char **argv)
 							std::cout << "x_2 method called\n";
 
 							dbus_server.send_uint64_x3string_x4double(time((time_t *)0), "string 1", "string 2", "string 3", 0.0, 1.1, 2.2, 3.3);
+						}
+						else if(message_method == "call_x_3")
+						{
+							std::string p0, p1, p2;
+
+							dbus_server.receive_x3string(p0, p1, p2);
+
+							std::cout << "x_3 method called with parameters: " << p0 << " / " << p1 << " / " << p2 << std::endl;
+
+							dbus_server.send_uint32_x3uint64(0, 1, 2, time((time_t *)0));
 						}
 						else
 							dbus_server.inform_error("unknown method");

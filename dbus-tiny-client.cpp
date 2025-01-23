@@ -22,6 +22,7 @@ int main(int argc, const char **argv)
 			std::string string_call_string;
 			std::string call_x_1;
 			std::string call_x_2;
+			std::string call_x_3;
 			std::string signal_string;
 			std::vector<std::string> arguments;
 
@@ -33,6 +34,7 @@ int main(int argc, const char **argv)
 				("string-call-string,c",	boost::program_options::value<std::string>(&string_call_string),		"call method taking string returning string")
 				("call-x-1,1",				boost::program_options::value<std::string>(&call_x_1),					"call method taking u32,u32,string,string returning u64,u32,u32,string,double")
 				("call-x-2,2",				boost::program_options::value<std::string>(&call_x_2),					"call method taking void returning u64,3xstring,4xdouble")
+				("call-x-3,3",				boost::program_options::value<std::string>(&call_x_3),					"call method taking 3xstring returning u32,3xu64")
 				("signal-string,S",			boost::program_options::value<std::string>(&signal_string),				"send signal with string parameter")
 				("argument",				boost::program_options::value<std::vector<std::string>>(&arguments),	"specify method arguments");
 
@@ -111,6 +113,20 @@ int main(int argc, const char **argv)
 				dbus_client.receive_uint64_x3string_x4double(r0, r1, r2, r3, r4, r5, r6, r7);
 
 				std::cerr << boost::format("%llu / %s / %s / %s / %f / %f / %f / %f\n") % r0 % r1 % r2 % r3 % r4 % r5 % r6 % r7;
+			}
+			else if(call_x_3.length() > 0)
+			{
+				std::string p0, p1, p2;
+				uint32_t r0;
+				uint64_t r1, r2, r3;
+
+				if(arguments.size() != 3)
+					throw("call-x-3 needs 3 arguments");
+
+				dbus_client.send_x3string(service, interface, call_x_3, arguments.at(0), arguments.at(1), arguments.at(2));
+				dbus_client.receive_uint32_x3uint64(r0, r1, r2, r3);
+
+				std::cerr << boost::format("%u / %lu / %lu / %llu\n") % r0 % r1 % r2 % r3;
 			}
 			else if(signal_string.length() > 0)
 			{

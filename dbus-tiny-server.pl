@@ -151,6 +151,20 @@ for(;;)
 
 					$dbus_server->send_uint64_x3string_x4double(time(), "string 1", "string 2", "string 3", 1.1, 2.2, 3.3, 4.4);
 				}
+				elsif($message_method eq "call_x_3")
+				{
+					my($p0, $p1, $p2);
+
+					$dbus_server->receive_x3string();
+
+					$p0 = $dbus_server->get_rv_string_0();
+					$p1 = $dbus_server->get_rv_string_1();
+					$p2 = $dbus_server->get_rv_string_2();
+
+					printf STDERR ("x_3 method called with parameters: %s / %s / %s\n", $p0, $p1, $p2);
+
+					$dbus_server->send_uint32_x3uint64(1, 2, 3, time());
+				}
 				else
 				{
 					$dbus_server->inform_error("unknown method");

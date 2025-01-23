@@ -10,6 +10,8 @@
 %rename get_message_swig get_message;
 %rename receive_uint32_uint32_string_string_swig receive_uint32_uint32_string_string;
 %rename receive_uint64_x3string_x4double_swig receive_uint64_x3string_x4double;
+%rename receive_x3string_swig receive_x3string;
+%rename receive_uint32_x3uint64_swig receive_uint32_x3uint64;
 
 %{
 #include <iostream>

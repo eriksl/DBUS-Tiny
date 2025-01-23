@@ -141,6 +141,34 @@ const std::string &DbusTinyServer::receive_string()
 	return(message_string_reply_0);
 }
 
+void DbusTinyServer::receive_x3string(std::string &p0, std::string &p1, std::string &p2)
+{
+	const char *s0, *s1, *s2;
+	std::string error_message;
+
+	dbus_message_get_args(pending_message, &dbus_error,
+			DBUS_TYPE_STRING, &s0,
+			DBUS_TYPE_STRING, &s1,
+			DBUS_TYPE_STRING, &s2,
+			DBUS_TYPE_INVALID);
+
+	if(dbus_error_is_set(&dbus_error))
+	{
+		error_message = dbus_error.message;
+		dbus_error_free(&dbus_error);
+		throw(DbusTinyException(std::string("dbus_message_get_args failed: ") + error_message));
+	}
+
+	p0 = s0;
+	p1 = s1;
+	p2 = s2;
+}
+
+void DbusTinyServer::receive_x3string_swig()
+{
+	receive_x3string(rv_string_0, rv_string_1, rv_string_2);
+}
+
 void DbusTinyServer::receive_uint32_uint32_string_string(uint32_t &p1, uint32_t &p2, std::string &p3, std::string &p4)
 {
 	dbus_uint32_t s1, s2;
@@ -246,6 +274,33 @@ void DbusTinyServer::send_uint64_x3string_x4double(uint64_t p0, const std::strin
 	dbus_message_unref(reply_message);
 }
 
+void DbusTinyServer::send_uint32_x3uint64(uint32_t p0, uint64_t p1, uint64_t p2, uint64_t p3)
+{
+	DBusMessage *reply_message;
+
+	if(!(reply_message = dbus_message_new_method_return(pending_message)))
+		throw(DbusTinyException("dbus_message_new_method_return failed"));
+
+	if(!dbus_message_append_args(reply_message,
+				DBUS_TYPE_UINT32, &p0,
+				DBUS_TYPE_UINT64, &p1,
+				DBUS_TYPE_UINT64, &p2,
+				DBUS_TYPE_UINT64, &p3,
+				DBUS_TYPE_INVALID))
+	{
+		dbus_message_unref(reply_message);
+		throw(DbusTinyException("dbus_message_append_args failed"));
+	}
+
+	if(!dbus_connection_send(bus_connection, reply_message, NULL))
+	{
+		dbus_message_unref(reply_message);
+		throw(DbusTinyException("dbus_connection_send failed"));
+	}
+
+	dbus_message_unref(reply_message);
+}
+
 const std::string &DbusTinyServer::inform_error(const std::string &reason)
 {
 	DBusMessage *error_message;
@@ -306,4 +361,9 @@ const std::string &DbusTinyServer::get_rv_string_0()
 const std::string &DbusTinyServer::get_rv_string_1()
 {
 	return(rv_string_1);
+}
+
+const std::string &DbusTinyServer::get_rv_string_2()
+{
+	return(rv_string_2);
 }
